@@ -71,10 +71,18 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>E-mail</Text>
             <View style={styles.inputWrapper}>
-              <MaterialCommunityIcons name="email-outline" size={20} color={AppColors.textSecondary} style={styles.inputIcon} />
+              <View style={styles.leadingIconContainer}>
+                <MaterialCommunityIcons
+                  name="account-outline"
+                  size={22}
+                  color={AppColors.error}
+                  style={styles.inputIcon}
+                />
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="seu@email.com"
+                placeholderTextColor={AppColors.textHint}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -86,15 +94,26 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Senha</Text>
             <View style={styles.inputWrapper}>
-              <MaterialCommunityIcons name="lock-outline" size={20} color={AppColors.textSecondary} style={styles.inputIcon} />
+              <View style={styles.leadingIconContainer}>
+                <MaterialCommunityIcons
+                  name="lock-outline"
+                  size={22}
+                  color={AppColors.error}
+                  style={styles.inputIcon}
+                />
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
+                placeholderTextColor={AppColors.textHint}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <TouchableOpacity
+                style={styles.trailingIconButton}
+                onPress={() => setShowPassword(!showPassword)}
+              >
                 <MaterialCommunityIcons 
                   name={showPassword ? "eye-off-outline" : "eye-outline"} 
                   size={20} 
@@ -180,18 +199,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: AppColors.surface,
     borderWidth: 1,
-    borderColor: AppColors.border,
+    borderColor: AppColors.divider,
     borderRadius: 12,
-    paddingHorizontal: 12,
     height: 52,
+    overflow: 'hidden',
+  },
+  leadingIconContainer: {
+    width: 42,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: AppColors.divider,
   },
   inputIcon: {
-    marginRight: 10,
+    marginTop: 1,
   },
   input: {
     flex: 1,
     fontSize: 16,
     color: AppColors.textPrimary,
+    paddingHorizontal: 12,
+  },
+  trailingIconButton: {
+    width: 42,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderLeftWidth: 1,
+    borderLeftColor: AppColors.divider,
   },
   row: {
     flexDirection: 'row',
