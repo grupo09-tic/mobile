@@ -114,7 +114,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 size={24} 
                 color={rememberMe ? AppColors.primary : AppColors.textSecondary} 
               />
-              <Text style={styles.checkboxLabel}>Lembrar-me</Text>
+              <Text style={styles.checkboxLabel}>Manter conectado</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
