@@ -75,7 +75,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 <MaterialCommunityIcons
                   name="account-outline"
                   size={22}
-                  color={AppColors.error}
+                  color={AppColors.primary}
                   style={styles.inputIcon}
                 />
               </View>
@@ -98,7 +98,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 <MaterialCommunityIcons
                   name="lock-outline"
                   size={22}
-                  color={AppColors.error}
+                  color={AppColors.primary}
                   style={styles.inputIcon}
                 />
               </View>
@@ -151,6 +151,13 @@ export const LoginScreen = ({ navigation }: any) => {
             ) : (
               <Text style={styles.buttonText}>Entrar</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('Denuncia')}
+          >
+            <Text style={styles.secondaryButtonText}>DENUNCIA ANONIMA</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -263,5 +270,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: AppColors.surface,
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: AppColors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: AppColors.primary,
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

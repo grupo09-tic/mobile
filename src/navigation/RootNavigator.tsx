@@ -34,7 +34,10 @@ export const RootNavigator = () => {
         }}
       >
         {!!isAuthenticated === false ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Denuncia" component={DenunciaScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
