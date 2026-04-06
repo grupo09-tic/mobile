@@ -11,18 +11,24 @@ import {
   ScrollView,
   Alert,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useAuthStore } from '../../auth/authStore';
 import { AppColors } from '../../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+const LOGO_ASPECT_RATIO = 904 / 343;
+
 export const LoginScreen = ({ navigation }: any) => {
+  const { width } = useWindowDimensions();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
   const { login, isLoading } = useAuthStore();
+  const logoWidth = Math.min(width - 48, 320);
+  const logoHeight = logoWidth / LOGO_ASPECT_RATIO;
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -61,7 +67,7 @@ export const LoginScreen = ({ navigation }: any) => {
         <View style={styles.header}>
           <Image 
             source={require('../../../assets/logo_anexo.png')} 
-            style={styles.logo}
+            style={[styles.logo, { width: logoWidth, height: logoHeight }]}
             resizeMode="contain"
           />
           <Text style={styles.subtitle}>Acesse sua conta para continuar</Text>
@@ -180,8 +186,6 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 320,
-    height: 100,
     marginBottom: 20,
     alignSelf: 'center',
   },

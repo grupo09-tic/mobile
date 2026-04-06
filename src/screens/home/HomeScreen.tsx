@@ -8,6 +8,7 @@ import {
   StatusBar,
   Dimensions,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../auth/authStore';
@@ -16,10 +17,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width - 56) / 2; // Ajustado para 2 colunas com padding de 20px e gap de 16px
+const LOGO_ASPECT_RATIO = 904 / 343;
 
 export const HomeScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const { user, logout } = useAuthStore();
+  const brandLogoWidth = Math.min(windowWidth - 114, 240);
+  const brandLogoHeight = brandLogoWidth / LOGO_ASPECT_RATIO;
   const firstName = user?.nome?.split(' ')[0] || 'Usuário';
 
   const modules = [
@@ -68,7 +73,7 @@ export const HomeScreen = ({ navigation }: any) => {
           <View style={styles.headerLeft}>
             <Image 
               source={require('../../../assets/logo_anexo.png')} 
-              style={styles.brandLogo}
+              style={[styles.brandLogo, { width: brandLogoWidth, height: brandLogoHeight }]}
               resizeMode="contain"
             />
             <View style={styles.greetingWrapper}>
@@ -187,8 +192,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   brandLogo: {
-    width: 240,
-    height: 75,
     marginBottom: 8,
   },
   greetingWrapper: {
