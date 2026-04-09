@@ -162,9 +162,9 @@ export const HomeScreen = ({ navigation }: any) => {
           <MaterialCommunityIcons name="bullhorn-outline" size={26} color={AppColors.textHint} />
           <Text style={styles.navText}>Avisos</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Documentos')}>
-          <MaterialCommunityIcons name="file-document-outline" size={26} color={AppColors.textHint} />
-          <Text style={styles.navText}>Documentos</Text>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
+          <MaterialCommunityIcons name="account-outline" size={28} color={AppColors.textHint} />
+          <Text style={styles.navText}>Perfil</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.navItem} 

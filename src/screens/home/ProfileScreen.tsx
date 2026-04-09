@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,8 +21,17 @@ import { AppColors } from '../../constants/theme';
 
 export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
-  const { user, logout, updatePassword } = useAuthStore();
+  const { user, logout, updatePassword, isLoading } = useAuthStore();
   const [modalVisible, setModalVisible] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -40,8 +50,21 @@ export const ProfileScreen = ({ navigation }: any) => {
     );
   };
 
+  const formatCPF = (cpf: string | null) => {
+    if (!cpf) return '—';
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={AppColors.primary} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
@@ -49,38 +72,42 @@ export const ProfileScreen = ({ navigation }: any) => {
         <Text style={styles.appBarTitle}>Meu Perfil</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Avatar Section */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarContainer}>
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-            ) : (
-              <MaterialCommunityIcons name="account" size={40} color={AppColors.primary} />
-            )}
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarContainer}>
+              {user?.avatar ? (
+                <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+              ) : (
+                <MaterialCommunityIcons name="account" size={60} color={AppColors.primary} />
+              )}
+            </View>
+            <TouchableOpacity style={styles.editBadge}>
+              <MaterialCommunityIcons name="camera" size={16} color="#fff" />
+            </TouchableOpacity>
           </View>
           <Text style={styles.userName}>{user?.nome || '—'}</Text>
           <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{user?.perfilUsuario?.nome || 'Usuário'}</Text>
+            <Text style={styles.roleText}>{user?.cargo || user?.perfilUsuario?.nome || 'Colaborador'}</Text>
           </View>
         </View>
 
         {/* Info Card */}
         <View style={styles.card}>
-          <InfoRow icon="email-outline" label="E-mail" value={user?.email || '—'} />
+          <Text style={styles.cardTitle}>Dados do Colaborador</Text>
+          <InfoRow icon="card-account-details-outline" label="CPF" value={formatCPF(user?.cpf || null)} />
           <View style={styles.divider} />
-          <InfoRow icon="shield-check-outline" label="Perfil" value={user?.perfilUsuario?.nome || '—'} />
+          <InfoRow icon="office-building-outline" label="Departamento" value={user?.departamento || '—'} />
           <View style={styles.divider} />
-          <InfoRow 
-            icon="circle-medium" 
-            label="Status" 
-            value={user?.ativo ? 'Ativo' : 'Inativo'} 
-            valueColor={user?.ativo ? AppColors.success : AppColors.error}
-          />
+          <InfoRow icon="briefcase-outline" label="Cargo" value={user?.cargo || '—'} />
+          <View style={styles.divider} />
+          <InfoRow icon="email-outline" label="E-mail Corporativo" value={user?.email || '—'} />
         </View>
 
-        {/* Actions Card */}
+        {/* Account Settings */}
         <View style={styles.card}>
+          <Text style={styles.cardTitle}>Configurações</Text>
           <ActionRow 
             icon="lock-reset" 
             label="Alterar Senha" 
@@ -89,11 +116,13 @@ export const ProfileScreen = ({ navigation }: any) => {
           <View style={styles.divider} />
           <ActionRow 
             icon="logout" 
-            label="Sair" 
+            label="Encerrar Sessão" 
             color={AppColors.error} 
             onTap={handleLogout} 
           />
         </View>
+
+        <Text style={styles.versionText}>Versão 1.0.0 (Brisa)</Text>
       </ScrollView>
 
       <ChangePasswordModal 
@@ -101,22 +130,28 @@ export const ProfileScreen = ({ navigation }: any) => {
         onClose={() => setModalVisible(false)}
         onSave={updatePassword}
       />
-    </View>
+    </Animated.View>
   );
 };
 
 const InfoRow = ({ icon, label, value, valueColor }: any) => (
   <View style={styles.row}>
-    <MaterialCommunityIcons name={icon} size={20} color={AppColors.textSecondary} />
-    <Text style={styles.rowLabel}>{label}</Text>
-    <Text style={[styles.rowValue, valueColor ? { color: valueColor } : undefined]}>{value}</Text>
+    <View style={styles.iconBox}>
+      <MaterialCommunityIcons name={icon} size={22} color={AppColors.primary} />
+    </View>
+    <View style={styles.rowInfo}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={[styles.rowValue, valueColor ? { color: valueColor } : undefined]}>{value}</Text>
+    </View>
   </View>
 );
 
 const ActionRow = ({ icon, label, onTap, color }: any) => (
   <TouchableOpacity style={styles.row} onPress={onTap}>
-    <MaterialCommunityIcons name={icon} size={20} color={color || AppColors.textSecondary} />
-    <Text style={[styles.rowLabel, color ? { color, fontWeight: '500' } : undefined]}>{label}</Text>
+    <View style={[styles.iconBox, color ? { backgroundColor: color + '1A' } : undefined]}>
+      <MaterialCommunityIcons name={icon} size={22} color={color || AppColors.textSecondary} />
+    </View>
+    <Text style={[styles.rowLabelAction, color ? { color, fontWeight: '600' } : undefined]}>{label}</Text>
     <MaterialCommunityIcons name="chevron-right" size={20} color={color ? color + '99' : AppColors.textHint} />
   </TouchableOpacity>
 );
@@ -209,135 +244,179 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: AppColors.background,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: AppColors.background,
+  },
   appBar: {
     backgroundColor: '#fff',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 5,
-    elevation: 2,
+    borderBottomColor: '#F3F4F6',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
+    marginRight: 8,
   },
   appBarTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: AppColors.textPrimary,
-    marginLeft: 16,
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   avatarSection: {
     alignItems: 'center',
     marginBottom: 32,
     marginTop: 10,
   },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 16,
+  },
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#E0E7FF',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: '#fff',
-    marginBottom: 16,
+    borderColor: AppColors.primary + '20',
     overflow: 'hidden',
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowRadius: 8,
   },
   avatarImage: {
     width: '100%',
     height: '100%',
   },
+  editBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 5,
+    backgroundColor: AppColors.primary,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
   userName: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     color: AppColors.textPrimary,
     marginBottom: 6,
   },
   roleBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 16,
+    backgroundColor: AppColors.primary + '15',
+    paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 20,
   },
   roleText: {
     fontSize: 13,
-    color: '#4338CA',
     fontWeight: '700',
+    color: AppColors.primary,
+    textTransform: 'uppercase',
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 20,
-    paddingHorizontal: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: AppColors.textHint,
+    marginBottom: 20,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 18,
+    paddingVertical: 12,
+  },
+  iconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: AppColors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  rowInfo: {
+    flex: 1,
   },
   rowLabel: {
-    fontSize: 15,
-    color: AppColors.textSecondary,
-    marginLeft: 16,
+    fontSize: 12,
+    color: AppColors.textHint,
+    marginBottom: 2,
+  },
+  rowLabelAction: {
     flex: 1,
+    fontSize: 16,
+    color: AppColors.textPrimary,
     fontWeight: '500',
   },
   rowValue: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     color: AppColors.textPrimary,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
-    marginLeft: 52,
+    backgroundColor: '#F3F4F6',
+    marginLeft: 58,
   },
+  versionText: {
+    textAlign: 'center',
+    color: AppColors.textHint,
+    fontSize: 12,
+    marginTop: 10,
+  },
+  // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: AppColors.textPrimary,
   },
@@ -345,26 +424,19 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   input: {
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    borderRadius: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: AppColors.textPrimary,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   primaryButton: {
     backgroundColor: AppColors.primary,
-    height: 56,
-    borderRadius: 20,
-    justifyContent: 'center',
+    borderRadius: 12,
+    padding: 18,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: AppColors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
   primaryButtonText: {
     color: '#fff',

@@ -18,6 +18,9 @@ export interface UserFromApi {
   email: string;
   avatar: string | null;
   ultimoAcesso: string | Date | null;
+  cpf: string | null;
+  departamento: string | null;
+  cargo: string | null;
   perfilUsuario: {
     id: number | string;
     nome: string;
