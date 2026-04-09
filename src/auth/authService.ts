@@ -21,6 +21,8 @@ export interface UserFromApi {
   cpf: string | null;
   departamento: string | null;
   cargo: string | null;
+  telefone: string | null;
+  dataAdmissao: string | Date | null;
   perfilUsuario: {
     id: number | string;
     nome: string;

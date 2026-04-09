@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -55,6 +56,23 @@ export const ProfileScreen = ({ navigation }: any) => {
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   };
 
+  const formatPhone = (phone: string | null) => {
+    if (!phone) return '—';
+    const cleaned = phone.replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
+    if (match) {
+      return `(${match[1]}) ${match[2]}-${match[3]}`;
+    }
+    return phone;
+  };
+
+  const formatDate = (date: string | Date | null) => {
+    if (!date) return '—';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return String(date);
+    return d.toLocaleDateString('pt-BR');
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -65,64 +83,74 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.appBarTitle}>Meu Perfil</Text>
-      </View>
+      <StatusBar barStyle="light-content" />
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Header Section (Blue Background) */}
+        <View style={[styles.headerSection, { paddingTop: insets.top + 20 }]}>
+          <TouchableOpacity 
+            style={[styles.backButton, { top: insets.top + 10 }]} 
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
+          </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Avatar Section */}
-        <View style={styles.avatarSection}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarContainer}>
               {user?.avatar ? (
                 <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
               ) : (
-                <MaterialCommunityIcons name="account" size={60} color={AppColors.primary} />
+                <MaterialCommunityIcons name="account" size={60} color="#fff" />
               )}
             </View>
             <TouchableOpacity style={styles.editBadge}>
-              <MaterialCommunityIcons name="camera" size={16} color="#fff" />
+              <MaterialCommunityIcons name="pencil" size={16} color="#FF7F50" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>{user?.nome || '—'}</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{user?.cargo || user?.perfilUsuario?.nome || 'Colaborador'}</Text>
+
+          <Text style={styles.userName}>{user?.nome || 'João Silva'}</Text>
+          <Text style={styles.userRole}>
+            {user?.cargo || 'Analista de TI'} · {user?.departamento || 'Departamento de Tecnologia'}
+          </Text>
+        </View>
+
+        {/* Main Content */}
+        <View style={styles.mainContent}>
+          {/* Info Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Dados do Colaborador</Text>
+            <InfoRow icon="card-account-details-outline" label="CPF" value={formatCPF(user?.cpf || null)} />
+            <View style={styles.divider} />
+            <InfoRow icon="phone-outline" label="Telefone" value={formatPhone(user?.telefone || null)} />
+            <View style={styles.divider} />
+            <InfoRow icon="calendar-check-outline" label="Data de Admissão" value={formatDate(user?.dataAdmissao || null)} />
+            <View style={styles.divider} />
+            <InfoRow icon="email-outline" label="E-mail Corporativo" value={user?.email || '—'} />
           </View>
-        </View>
 
-        {/* Info Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Dados do Colaborador</Text>
-          <InfoRow icon="card-account-details-outline" label="CPF" value={formatCPF(user?.cpf || null)} />
-          <View style={styles.divider} />
-          <InfoRow icon="office-building-outline" label="Departamento" value={user?.departamento || '—'} />
-          <View style={styles.divider} />
-          <InfoRow icon="briefcase-outline" label="Cargo" value={user?.cargo || '—'} />
-          <View style={styles.divider} />
-          <InfoRow icon="email-outline" label="E-mail Corporativo" value={user?.email || '—'} />
-        </View>
+          {/* Account Settings */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Configurações</Text>
+            <ActionRow 
+              icon="lock-reset" 
+              label="Alterar Senha" 
+              onTap={() => setModalVisible(true)} 
+            />
+            <View style={styles.divider} />
+            <ActionRow 
+              icon="logout" 
+              label="Encerrar Sessão" 
+              color={AppColors.error} 
+              onTap={handleLogout} 
+            />
+          </View>
 
-        {/* Account Settings */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Configurações</Text>
-          <ActionRow 
-            icon="lock-reset" 
-            label="Alterar Senha" 
-            onTap={() => setModalVisible(true)} 
-          />
-          <View style={styles.divider} />
-          <ActionRow 
-            icon="logout" 
-            label="Encerrar Sessão" 
-            color={AppColors.error} 
-            onTap={handleLogout} 
-          />
+          <Text style={styles.versionText}>Versão 1.0.0 (Brisa)</Text>
         </View>
-
-        <Text style={styles.versionText}>Versão 1.0.0 (Brisa)</Text>
       </ScrollView>
 
       <ChangePasswordModal 
@@ -250,51 +278,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: AppColors.background,
   },
-  appBar: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
+  headerSection: {
+    backgroundColor: AppColors.primary,
     alignItems: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingBottom: 40,
+    position: 'relative',
   },
   backButton: {
+    position: 'absolute',
+    left: 10,
     padding: 8,
-    marginRight: 8,
-  },
-  appBarTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: AppColors.textPrimary,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 10,
+    zIndex: 10,
   },
   avatarWrapper: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   avatarContainer: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: '#fff',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 4,
-    borderColor: AppColors.primary + '20',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.4)',
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
   },
   avatarImage: {
     width: '100%',
@@ -302,34 +311,42 @@ const styles = StyleSheet.create({
   },
   editBadge: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 5,
     right: 5,
-    backgroundColor: AppColors.primary,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    backgroundColor: '#fff',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   userName: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '800',
-    color: AppColors.textPrimary,
-    marginBottom: 6,
+    color: '#fff',
+    marginBottom: 8,
   },
-  roleBadge: {
-    backgroundColor: AppColors.primary + '15',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
+  userRole: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
-  roleText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: AppColors.primary,
-    textTransform: 'uppercase',
+  mainContent: {
+    padding: 20,
+    marginTop: -20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: AppColors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   card: {
     backgroundColor: '#fff',
@@ -395,6 +412,7 @@ const styles = StyleSheet.create({
     color: AppColors.textHint,
     fontSize: 12,
     marginTop: 10,
+    marginBottom: 20,
   },
   // Modal Styles
   modalOverlay: {
