@@ -53,6 +53,14 @@ export const HomeScreen = ({ navigation }: any) => {
       route: 'Documentos',
     },
     {
+      id: 'financeiro',
+      title: 'Informes Financeiros',
+      subtitle: 'Contracheques',
+      icon: 'finance',
+      color: AppColors.primary,
+      route: 'InformesFinanceiros',
+    },
+    {
       id: 'denuncia',
       title: 'Denúncia Anônima',
       subtitle: 'Relate ocorrências com segurança',
@@ -109,7 +117,7 @@ export const HomeScreen = ({ navigation }: any) => {
         {/* Modules Header */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Módulos</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ModuleList')}>
             <Text style={styles.seeAllLink}>Ver todos</Text>
           </TouchableOpacity>
         </View>
