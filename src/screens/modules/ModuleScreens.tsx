@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -111,16 +112,140 @@ export const DocumentosScreen = ({ navigation }: any) => {
 };
 
 export const DenunciaScreen = ({ navigation }: any) => {
+  const insets = useSafeAreaInsets();
+  const { openSidebar } = useSidebar();
   const { theme } = useTheme();
+  const [categoria, setCategoria] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [enviado, setEnviado] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const categorias = [
+    'Ética e Conduta',
+    'Assédio',
+    'Segurança',
+    'Infraestrutura',
+    'Outros',
+  ];
+
+  const handleEnviar = async () => {
+    if (!categoria || !descricao.trim()) {
+      Alert.alert('Erro', 'Por favor, selecione uma categoria e descreva a ocorrência.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Simulação de envio para o backend
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setEnviado(true);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível enviar sua denúncia. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (enviado) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <MaterialCommunityIcons name="chevron-left" size={24} color={theme.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.appBarTitle, { color: theme.textPrimary }]}>Denúncia Enviada</Text>
+        </View>
+        
+        <View style={styles.center}>
+          <View style={styles.successIconContainer}>
+            <MaterialCommunityIcons name="check-circle" size={80} color={theme.success} />
+          </View>
+          <Text style={[styles.successTitle, { color: theme.textPrimary }]}>Recebemos seu relato!</Text>
+          <Text style={[styles.successSubtitle, { color: theme.textSecondary }]}>
+            Sua denúncia foi registrada de forma totalmente anônima e será analisada pelo nosso comitê de ética.
+          </Text>
+          <TouchableOpacity 
+            style={[styles.primaryButton, { width: '80%', backgroundColor: theme.primary }]} 
+            onPress={() => navigation.navigate('Home')}
+          >
+            <Text style={styles.primaryButtonText}>Voltar para o Início</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <ModuleScaffold
-      title="Denúncia Anônima"
-      icon="shield-outline"
-      iconColor={theme.moduleRed}
-      items={[]}
-      emptyMessage="Utilize este canal para relatar ocorrências de forma segura e anônima."
-      onBack={() => navigation.goBack()}
-    />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')}>
+          <MaterialCommunityIcons name="chevron-left" size={24} color={theme.textPrimary} />
+        </TouchableOpacity>
+        <Text style={[styles.appBarTitle, { color: theme.textPrimary }]}>Denúncia Anônima</Text>
+        <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
+          <MaterialCommunityIcons name="menu" size={26} color={theme.textPrimary} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={[styles.infoBanner, { backgroundColor: theme.isDark ? theme.surface : '#EEF2FF', borderColor: theme.divider }]}>
+          <MaterialCommunityIcons name="shield-check" size={24} color={theme.primary} />
+          <Text style={[styles.infoText, { color: theme.isDark ? theme.textPrimary : '#4338CA' }]}>
+            Este é um canal 100% seguro e anônimo. Suas informações não serão compartilhadas.
+          </Text>
+        </View>
+
+        <Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>Categoria da Denúncia</Text>
+        <View style={styles.pickerContainer}>
+          {categorias.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[
+                styles.catOption,
+                { backgroundColor: theme.surface, borderColor: theme.divider },
+                categoria === cat && { backgroundColor: theme.primary, borderColor: theme.primary }
+              ]}
+              onPress={() => setCategoria(cat)}
+            >
+              <Text style={[
+                styles.catText,
+                { color: theme.textSecondary },
+                categoria === cat && { color: '#fff', fontWeight: '700' }
+              ]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={[styles.fieldLabel, { color: theme.textPrimary }]}>Descrição da Ocorrência</Text>
+        <TextInput
+          style={[styles.textArea, { backgroundColor: theme.surface, borderColor: theme.divider, color: theme.textPrimary }]}
+          placeholder="Descreva aqui o que aconteceu com o máximo de detalhes possível..."
+          placeholderTextColor={theme.textHint}
+          multiline
+          numberOfLines={6}
+          textAlignVertical="top"
+          value={descricao}
+          onChangeText={setDescricao}
+        />
+
+        <TouchableOpacity 
+          style={[styles.primaryButton, { backgroundColor: theme.primary }, loading && { opacity: 0.7 }]} 
+          onPress={handleEnviar}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <MaterialCommunityIcons name="send" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.primaryButtonText}>Enviar Denúncia</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
