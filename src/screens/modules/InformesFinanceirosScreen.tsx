@@ -7,13 +7,18 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppColors } from '../../constants/theme';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { financeiroService, Contracheque } from '../../api/financeiroService';
+
+const PERSISTENCE_KEY = '@financeiro_selection';
 
 export const InformesFinanceirosScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
@@ -22,21 +27,62 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [paystubs, setPaystubs] = useState<Contracheque[]>([]);
+  
+  // Modais de Seleção
+  const [yearModalVisible, setYearModalVisible] = useState(false);
+  const [monthModalVisible, setMonthModalVisible] = useState(false);
 
+  // Carregar estado persistido
   useEffect(() => {
+    const loadSelection = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(PERSISTENCE_KEY);
+        if (saved) {
+          const { year, month } = JSON.parse(saved);
+          setSelectedYear(year);
+          setSelectedMonth(month);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar seleção:', e);
+      }
+    };
+    loadSelection();
+  }, []);
+
+  // Persistir estado ao mudar
+  useEffect(() => {
+    const saveSelection = async () => {
+      try {
+        await AsyncStorage.setItem(PERSISTENCE_KEY, JSON.stringify({
+          year: selectedYear,
+          month: selectedMonth
+        }));
+      } catch (e) {
+        console.error('Erro ao salvar seleção:', e);
+      }
+    };
+    saveSelection();
     fetchPaystubs();
   }, [selectedYear, selectedMonth]);
 
   const fetchPaystubs = async () => {
     try {
       setLoading(true);
-      // Em uma implementação real, o backend retornaria os dados. 
-      // Se falhar (ex: endpoint não existe ainda), mantemos o mock para demonstração.
+      // Validação de período futuro
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      
+      if (parseInt(selectedYear) > currentYear || (parseInt(selectedYear) === currentYear && parseInt(selectedMonth) > currentMonth)) {
+        setPaystubs([]);
+        return;
+      }
+
       try {
         const data = await financeiroService.getContracheques(selectedYear, selectedMonth);
         setPaystubs(data);
       } catch (err) {
-        console.warn('Backend offline ou erro na API, usando mock para demonstração');
+        // Fallback mock
         setPaystubs([
           {
             id: '1',
@@ -59,51 +105,71 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
     }
   };
 
+  const years = ['2026', '2025', '2024', '2023', '2022', '2021', '2020'];
+  const months = [
+    { label: 'Janeiro', value: '01' }, { label: 'Fevereiro', value: '02' }, { label: 'Março', value: '03' },
+    { label: 'Abril', value: '04' }, { label: 'Maio', value: '05' }, { label: 'Junho', value: '06' },
+    { label: 'Julho', value: '07' }, { label: 'Agosto', value: '08' }, { label: 'Setembro', value: '09' },
+    { label: 'Outubro', value: '10' }, { label: 'Novembro', value: '11' }, { label: 'Dezembro', value: '12' },
+  ];
+
+  const getMonthLabel = (value: string) => months.find(m => m.value === value)?.label || '';
+
+  const SelectionModal = ({ visible, title, data, selectedValue, onSelect, onClose }: any) => (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <MaterialCommunityIcons name="close" size={24} color={AppColors.textHint} />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={data}
+            keyExtractor={(item) => item.value || item}
+            renderItem={({ item }) => {
+              const label = item.label || item;
+              const value = item.value || item;
+              const isSelected = selectedValue === value;
+              return (
+                <TouchableOpacity 
+                  style={[styles.modalOption, isSelected && styles.modalOptionActive]} 
+                  onPress={() => {
+                    onSelect(value);
+                    onClose();
+                  }}
+                >
+                  <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextActive]}>{label}</Text>
+                  {isSelected && <MaterialCommunityIcons name="check" size={20} color={AppColors.primary} />}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
   const handleDownload = async (paystub: Contracheque) => {
     try {
       setDownloadingId(paystub.id);
-      
-      const fileUri = `${FileSystem.documentDirectory}${paystub.titulo.replace(/\s+/g, '_')}_${paystub.data.replace(/\//g, '-')}.pdf`;
-      
-      // Se for produção, usaríamos a URL do backend
-      const downloadUrl = paystub.url.startsWith('http') 
-        ? paystub.url 
-        : financeiroService.getDownloadUrl(paystub.id);
-
-      const downloadResumable = FileSystem.createDownloadResumable(
-        downloadUrl,
-        fileUri,
-        {}
-      );
-
-      const result = await downloadResumable.downloadAsync();
-      
+      const fileUri = `${FileSystem.documentDirectory}${paystub.titulo.replace(/\s+/g, '_')}.pdf`;
+      const downloadUrl = paystub.url.startsWith('http') ? paystub.url : financeiroService.getDownloadUrl(paystub.id);
+      const result = await FileSystem.downloadAsync(downloadUrl, fileUri);
       if (result && result.uri) {
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(result.uri);
-        } else {
-          Alert.alert('Sucesso', 'Arquivo baixado com sucesso!');
-        }
+        if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(result.uri);
+        else Alert.alert('Sucesso', 'Arquivo baixado com sucesso!');
       }
     } catch (error) {
-      console.error(error);
       Alert.alert('Erro', 'Não foi possível baixar o arquivo.');
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const years = ['2026', '2025', '2024', '2023'];
-  const months = [
-    { label: 'Jan', value: '01' }, { label: 'Fev', value: '02' }, { label: 'Mar', value: '03' },
-    { label: 'Abr', value: '04' }, { label: 'Mai', value: '05' }, { label: 'Jun', value: '06' },
-    { label: 'Jul', value: '07' }, { label: 'Ago', value: '08' }, { label: 'Set', value: '09' },
-    { label: 'Out', value: '10' }, { label: 'Nov', value: '11' }, { label: 'Dez', value: '12' },
-  ];
-
   return (
     <View style={styles.container}>
-      {/* App Bar */}
       <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
@@ -112,53 +178,49 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Filters Section */}
         <View style={styles.filterSection}>
-          <Text style={styles.sectionTitle}>Selecione o período</Text>
-          
-          <Text style={styles.label}>Ano</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.yearSelector}>
-            {years.map(year => (
-              <TouchableOpacity
-                key={year}
-                style={[styles.yearOption, selectedYear === year && styles.activeOption]}
-                onPress={() => setSelectedYear(year)}
-              >
-                <Text style={[styles.optionText, selectedYear === year && styles.activeOptionText]}>{year}</Text>
+          <Text style={styles.sectionTitle}>Filtro Temporal</Text>
+          <View style={styles.dropdownRow}>
+            <View style={styles.dropdownContainer}>
+              <Text style={styles.fieldLabel}>Ano</Text>
+              <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setYearModalVisible(true)}>
+                <Text style={styles.dropdownValue}>{selectedYear}</Text>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={AppColors.textHint} />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </View>
 
-          <Text style={styles.label}>Mês</Text>
-          <View style={styles.monthGrid}>
-            {months.map(month => (
-              <TouchableOpacity
-                key={month.value}
-                style={[styles.monthOption, selectedMonth === month.value && styles.activeOption]}
-                onPress={() => setSelectedMonth(month.value)}
-              >
-                <Text style={[styles.optionText, selectedMonth === month.value && styles.activeOptionText]}>
-                  {month.label}
-                </Text>
+            <View style={styles.dropdownContainer}>
+              <Text style={styles.fieldLabel}>Mês</Text>
+              <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setMonthModalVisible(true)}>
+                <Text style={styles.dropdownValue}>{getMonthLabel(selectedMonth)}</Text>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={AppColors.textHint} />
               </TouchableOpacity>
-            ))}
+            </View>
           </View>
         </View>
 
-        {/* Results Section */}
         <View style={styles.resultsSection}>
-          <Text style={styles.sectionTitle}>Documentos Disponíveis</Text>
+          <Text style={styles.sectionTitle}>Documentos para {getMonthLabel(selectedMonth)}/{selectedYear}</Text>
           {loading ? (
-            <ActivityIndicator size="large" color={AppColors.primary} style={{ marginTop: 20 }} />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={AppColors.primary} />
+              <Text style={styles.loadingText}>Buscando arquivos...</Text>
+            </View>
           ) : paystubs.length > 0 ? (
             paystubs.map(paystub => (
               <View key={paystub.id} style={styles.paystubCard}>
-                <View style={styles.paystubIcon}>
+                <View style={[styles.paystubIcon, { backgroundColor: AppColors.moduleRed + '1A' }]}>
                   <MaterialCommunityIcons name="file-pdf-box" size={32} color={AppColors.moduleRed} />
                 </View>
                 <View style={styles.paystubInfo}>
-                  <Text style={styles.paystubTitle}>{paystub.titulo}</Text>
-                  <Text style={styles.paystubSubtitle}>{paystub.data} • {paystub.tamanho}</Text>
+                  <Text style={styles.paystubTitle} numberOfLines={1}>{paystub.titulo}</Text>
+                  <View style={styles.paystubMeta}>
+                    <Text style={styles.paystubSubtitle}>{paystub.data}</Text>
+                    <View style={styles.metaDivider} />
+                    <Text style={styles.paystubSubtitle}>{paystub.tamanho}</Text>
+                    <View style={styles.metaDivider} />
+                    <Text style={[styles.paystubSubtitle, { color: AppColors.moduleRed, fontWeight: '700' }]}>PDF</Text>
+                  </View>
                 </View>
                 <TouchableOpacity 
                   style={styles.downloadButton} 
@@ -168,19 +230,42 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
                   {downloadingId === paystub.id ? (
                     <ActivityIndicator size="small" color={AppColors.primary} />
                   ) : (
-                    <MaterialCommunityIcons name="download" size={24} color={AppColors.primary} />
+                    <MaterialCommunityIcons name="download-circle-outline" size={30} color={AppColors.primary} />
                   )}
                 </TouchableOpacity>
               </View>
             ))
           ) : (
             <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="file-search-outline" size={48} color={AppColors.textHint} />
-              <Text style={styles.emptyText}>Nenhum contracheque encontrado para este período.</Text>
+              <View style={styles.emptyIconContainer}>
+                <MaterialCommunityIcons name="file-search-outline" size={64} color={AppColors.textHint + '4D'} />
+              </View>
+              <Text style={styles.emptyTitle}>Nenhum arquivo encontrado</Text>
+              <Text style={styles.emptyText}>
+                Não existem informes financeiros disponíveis para o período de {getMonthLabel(selectedMonth)} de {selectedYear}.
+              </Text>
             </View>
           )}
         </View>
       </ScrollView>
+
+      <SelectionModal
+        visible={yearModalVisible}
+        title="Selecionar Ano"
+        data={years}
+        selectedValue={selectedYear}
+        onSelect={setSelectedYear}
+        onClose={() => setYearModalVisible(false)}
+      />
+
+      <SelectionModal
+        visible={monthModalVisible}
+        title="Selecionar Mês"
+        data={months}
+        selectedValue={selectedMonth}
+        onSelect={setSelectedMonth}
+        onClose={() => setMonthModalVisible(false)}
+      />
     </View>
   );
 };
@@ -211,96 +296,188 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   filterSection: {
-    marginBottom: 24,
+    marginBottom: 32,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: AppColors.textPrimary,
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  label: {
-    fontSize: 14,
-    color: AppColors.textSecondary,
+  dropdownRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  dropdownContainer: {
+    flex: 1,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: AppColors.textHint,
     marginBottom: 8,
-    marginTop: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  yearSelector: {
+  dropdownTrigger: {
     flexDirection: 'row',
-    marginBottom: 16,
-  },
-  yearOption: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    marginRight: 10,
-  },
-  monthGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  monthOption: {
-    width: '23%',
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
-  },
-  activeOption: {
-    backgroundColor: AppColors.primary + '1A',
+    justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: AppColors.primary,
+    borderColor: '#E5E7EB',
   },
-  optionText: {
-    fontSize: 14,
+  dropdownValue: {
+    fontSize: 15,
     color: AppColors.textPrimary,
-  },
-  activeOptionText: {
-    color: AppColors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   resultsSection: {
     flex: 1,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: AppColors.textHint,
+    fontWeight: '500',
   },
   paystubCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#F3F4F6',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
   },
   paystubIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 16,
   },
   paystubInfo: {
     flex: 1,
   },
   paystubTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: AppColors.textPrimary,
+    marginBottom: 4,
+  },
+  paystubMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   paystubSubtitle: {
     fontSize: 13,
     color: AppColors.textHint,
-    marginTop: 2,
+    fontWeight: '500',
+  },
+  metaDivider: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E5E7EB',
+    marginHorizontal: 8,
   },
   downloadButton: {
-    padding: 8,
+    padding: 4,
   },
   emptyState: {
     alignItems: 'center',
-    marginTop: 40,
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F9FAFB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: AppColors.textPrimary,
+    marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
     color: AppColors.textHint,
     textAlign: 'center',
-    marginTop: 12,
+    lineHeight: 20,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: AppColors.textPrimary,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    paddingHorizontal: 24,
+  },
+  modalOptionActive: {
+    backgroundColor: AppColors.primary + '08',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: AppColors.textPrimary,
+    fontWeight: '500',
+  },
+  modalOptionTextActive: {
+    color: AppColors.primary,
+    fontWeight: '700',
   },
 });
