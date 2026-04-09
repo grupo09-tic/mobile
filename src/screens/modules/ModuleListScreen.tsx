@@ -8,78 +8,40 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from '../../components/ThemeContext';
 import { AppColors } from '../../constants/theme';
+import { ALL_MODULES } from '../../constants/modules';
 
 export const ModuleListScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
 
-  const allModules = [
-    {
-      id: 'questionarios',
-      title: 'Questionários',
-      subtitle: 'Responda pesquisas e avaliações',
-      icon: 'clipboard-text-outline',
-      color: AppColors.moduleBlue,
-      route: 'Questionarios',
-    },
-    {
-      id: 'avisos',
-      title: 'Avisos',
-      subtitle: 'Fique por dentro das novidades',
-      icon: 'bullhorn-outline',
-      color: AppColors.modulePurple,
-      route: 'Avisos',
-    },
-    {
-      id: 'documentos',
-      title: 'Documentos',
-      subtitle: 'Acesse seus arquivos importantes',
-      icon: 'file-document-outline',
-      color: AppColors.moduleGreen,
-      route: 'Documentos',
-    },
-    {
-      id: 'financeiro',
-      title: 'Informes Financeiros',
-      subtitle: 'Veja seus contracheques e informes',
-      icon: 'finance',
-      color: AppColors.primary,
-      route: 'InformesFinanceiros',
-    },
-    {
-      id: 'denuncia',
-      title: 'Denúncia Anônima',
-      subtitle: 'Relate ocorrências com segurança',
-      icon: 'shield-outline',
-      color: AppColors.moduleRed,
-      route: 'Denuncia',
-    },
-  ];
+  const allModules = ALL_MODULES.filter(m => m.id !== 'home' && m.id !== 'profile');
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')}>
+          <MaterialCommunityIcons name="chevron-left" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.appBarTitle}>Todos os Módulos</Text>
+        <Text style={[styles.appBarTitle, { color: theme.textPrimary }]}>Todos os Módulos</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {allModules.map((module) => (
           <TouchableOpacity
             key={module.id}
-            style={styles.moduleCard}
+            style={[styles.moduleCard, { backgroundColor: theme.surface, borderColor: theme.divider }]}
             onPress={() => navigation.navigate(module.route)}
           >
-            <View style={[styles.iconContainer, { backgroundColor: module.color + '1A' }]}>
-              <MaterialCommunityIcons name={module.icon as any} size={28} color={module.color} />
+            <View style={[styles.iconContainer, { backgroundColor: (theme as any)[module.colorName] + '1A' }]}>
+              <MaterialCommunityIcons name={module.icon as any} size={28} color={(theme as any)[module.colorName]} />
             </View>
             <View style={styles.moduleInfo}>
-              <Text style={styles.moduleTitle}>{module.title}</Text>
-              <Text style={styles.moduleSubtitle}>{module.subtitle}</Text>
+              <Text style={[styles.moduleTitle, { color: theme.textPrimary }]}>{module.title}</Text>
+              <Text style={[styles.moduleSubtitle, { color: theme.textHint }]}>{module.subtitle}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={AppColors.textHint} />
+            <MaterialCommunityIcons name="chevron-right" size={24} color={theme.textHint} />
           </TouchableOpacity>
         ))}
       </ScrollView>

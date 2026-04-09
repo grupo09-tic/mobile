@@ -12,16 +12,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { AppColors } from '../../constants/theme';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSidebar } from '../../components/SidebarContext';
+import { useTheme } from '../../components/ThemeContext';
 import { financeiroService, Contracheque } from '../../api/financeiroService';
 
 const PERSISTENCE_KEY = '@financeiro_selection';
 
 export const InformesFinanceirosScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const { openSidebar } = useSidebar();
+  const { theme } = useTheme();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
   const [loading, setLoading] = useState(false);
@@ -118,11 +121,11 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
   const SelectionModal = ({ visible, title, data, selectedValue, onSelect, onClose }: any) => (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.divider }]}>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{title}</Text>
             <TouchableOpacity onPress={onClose}>
-              <MaterialCommunityIcons name="close" size={24} color={AppColors.textHint} />
+              <MaterialCommunityIcons name="close" size={24} color={theme.textHint} />
             </TouchableOpacity>
           </View>
           <FlatList
@@ -134,14 +137,14 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
               const isSelected = selectedValue === value;
               return (
                 <TouchableOpacity 
-                  style={[styles.modalOption, isSelected && styles.modalOptionActive]} 
+                  style={[styles.modalOption, isSelected && { backgroundColor: theme.background }]}
                   onPress={() => {
                     onSelect(value);
                     onClose();
                   }}
                 >
-                  <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextActive]}>{label}</Text>
-                  {isSelected && <MaterialCommunityIcons name="check" size={20} color={AppColors.primary} />}
+                  <Text style={[styles.modalOptionText, { color: theme.textPrimary }, isSelected && { color: theme.primary, fontWeight: '700' }]}>{label}</Text>
+                  {isSelected && <MaterialCommunityIcons name="check" size={20} color={theme.primary} />}
                 </TouchableOpacity>
               );
             }}
@@ -169,57 +172,60 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')}>
+          <MaterialCommunityIcons name="chevron-left" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.appBarTitle}>Informes Financeiros</Text>
+        <Text style={[styles.appBarTitle, { color: theme.textPrimary }]}>Informes Financeiros</Text>
+        <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
+          <MaterialCommunityIcons name="menu" size={26} color={theme.textPrimary} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.filterSection}>
-          <Text style={styles.sectionTitle}>Filtro Temporal</Text>
+        <View style={[styles.filterSection, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Filtro Temporal</Text>
           <View style={styles.dropdownRow}>
             <View style={styles.dropdownContainer}>
-              <Text style={styles.fieldLabel}>Ano</Text>
-              <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setYearModalVisible(true)}>
-                <Text style={styles.dropdownValue}>{selectedYear}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color={AppColors.textHint} />
+              <Text style={[styles.fieldLabel, { color: theme.textHint }]}>Ano</Text>
+              <TouchableOpacity style={[styles.dropdownTrigger, { backgroundColor: theme.background, borderColor: theme.divider }]} onPress={() => setYearModalVisible(true)}>
+                <Text style={[styles.dropdownValue, { color: theme.textPrimary }]}>{selectedYear}</Text>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={theme.textHint} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.dropdownContainer}>
-              <Text style={styles.fieldLabel}>Mês</Text>
-              <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setMonthModalVisible(true)}>
-                <Text style={styles.dropdownValue}>{getMonthLabel(selectedMonth)}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color={AppColors.textHint} />
+              <Text style={[styles.fieldLabel, { color: theme.textHint }]}>Mês</Text>
+              <TouchableOpacity style={[styles.dropdownTrigger, { backgroundColor: theme.background, borderColor: theme.divider }]} onPress={() => setMonthModalVisible(true)}>
+                <Text style={[styles.dropdownValue, { color: theme.textPrimary }]}>{getMonthLabel(selectedMonth)}</Text>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={theme.textHint} />
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
         <View style={styles.resultsSection}>
-          <Text style={styles.sectionTitle}>Documentos para {getMonthLabel(selectedMonth)}/{selectedYear}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Documentos para {getMonthLabel(selectedMonth)}/{selectedYear}</Text>
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={AppColors.primary} />
-              <Text style={styles.loadingText}>Buscando arquivos...</Text>
+              <ActivityIndicator size="large" color={theme.primary} />
+              <Text style={[styles.loadingText, { color: theme.textHint }]}>Buscando arquivos...</Text>
             </View>
           ) : paystubs.length > 0 ? (
             paystubs.map(paystub => (
-              <View key={paystub.id} style={styles.paystubCard}>
-                <View style={[styles.paystubIcon, { backgroundColor: AppColors.moduleRed + '1A' }]}>
-                  <MaterialCommunityIcons name="file-pdf-box" size={32} color={AppColors.moduleRed} />
+              <View key={paystub.id} style={[styles.paystubCard, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+                <View style={[styles.paystubIcon, { backgroundColor: theme.moduleRed + '1A' }]}>
+                  <MaterialCommunityIcons name="file-pdf-box" size={32} color={theme.moduleRed} />
                 </View>
                 <View style={styles.paystubInfo}>
-                  <Text style={styles.paystubTitle} numberOfLines={1}>{paystub.titulo}</Text>
+                  <Text style={[styles.paystubTitle, { color: theme.textPrimary }]} numberOfLines={1}>{paystub.titulo}</Text>
                   <View style={styles.paystubMeta}>
-                    <Text style={styles.paystubSubtitle}>{paystub.data}</Text>
-                    <View style={styles.metaDivider} />
-                    <Text style={styles.paystubSubtitle}>{paystub.tamanho}</Text>
-                    <View style={styles.metaDivider} />
-                    <Text style={[styles.paystubSubtitle, { color: AppColors.moduleRed, fontWeight: '700' }]}>PDF</Text>
+                    <Text style={[styles.paystubSubtitle, { color: theme.textHint }]}>{paystub.data}</Text>
+                    <View style={[styles.metaDivider, { backgroundColor: theme.divider }]} />
+                    <Text style={[styles.paystubSubtitle, { color: theme.textHint }]}>{paystub.tamanho}</Text>
+                    <View style={[styles.metaDivider, { backgroundColor: theme.divider }]} />
+                    <Text style={[styles.paystubSubtitle, { color: theme.moduleRed, fontWeight: '700' }]}>PDF</Text>
                   </View>
                 </View>
                 <TouchableOpacity 
@@ -228,20 +234,20 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
                   disabled={downloadingId === paystub.id}
                 >
                   {downloadingId === paystub.id ? (
-                    <ActivityIndicator size="small" color={AppColors.primary} />
+                    <ActivityIndicator size="small" color={theme.primary} />
                   ) : (
-                    <MaterialCommunityIcons name="download-circle-outline" size={30} color={AppColors.primary} />
+                    <MaterialCommunityIcons name="download-circle-outline" size={30} color={theme.primary} />
                   )}
                 </TouchableOpacity>
               </View>
             ))
           ) : (
             <View style={styles.emptyState}>
-              <View style={styles.emptyIconContainer}>
-                <MaterialCommunityIcons name="file-search-outline" size={64} color={AppColors.textHint + '4D'} />
+              <View style={[styles.emptyIconContainer, { backgroundColor: theme.background }]}>
+                <MaterialCommunityIcons name="file-search-outline" size={64} color={theme.textHint + '4D'} />
               </View>
-              <Text style={styles.emptyTitle}>Nenhum arquivo encontrado</Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyTitle, { color: theme.textPrimary }]}>Nenhum arquivo encontrado</Text>
+              <Text style={[styles.emptyText, { color: theme.textHint }]}>
                 Não existem informes financeiros disponíveis para o período de {getMonthLabel(selectedMonth)} de {selectedYear}.
               </Text>
             </View>
@@ -273,15 +279,12 @@ export const InformesFinanceirosScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppColors.background,
   },
   appBar: {
-    backgroundColor: '#fff',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   backButton: {
     padding: 8,
@@ -290,18 +293,19 @@ const styles = StyleSheet.create({
   appBarTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: AppColors.textPrimary,
+    flex: 1,
+  },
+  menuButton: {
+    padding: 8,
   },
   scrollContent: {
     padding: 20,
   },
   filterSection: {
     marginBottom: 32,
-    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -311,7 +315,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: AppColors.textPrimary,
     marginBottom: 20,
   },
   dropdownRow: {
@@ -324,7 +327,6 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: AppColors.textHint,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -333,16 +335,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   dropdownValue: {
     fontSize: 15,
-    color: AppColors.textPrimary,
     fontWeight: '600',
   },
   resultsSection: {
@@ -355,18 +354,15 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: AppColors.textHint,
     fontWeight: '500',
   },
   paystubCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     padding: 14,
     borderRadius: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -387,7 +383,6 @@ const styles = StyleSheet.create({
   paystubTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: AppColors.textPrimary,
     marginBottom: 4,
   },
   paystubMeta: {
@@ -396,14 +391,12 @@ const styles = StyleSheet.create({
   },
   paystubSubtitle: {
     fontSize: 13,
-    color: AppColors.textHint,
     fontWeight: '500',
   },
   metaDivider: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E5E7EB',
     marginHorizontal: 8,
   },
   downloadButton: {
@@ -418,7 +411,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#F9FAFB',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -426,12 +418,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: AppColors.textPrimary,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
-    color: AppColors.textHint,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -442,7 +432,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '70%',
@@ -454,12 +443,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: AppColors.textPrimary,
   },
   modalOption: {
     flexDirection: 'row',
@@ -468,16 +455,8 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingHorizontal: 24,
   },
-  modalOptionActive: {
-    backgroundColor: AppColors.primary + '08',
-  },
   modalOptionText: {
     fontSize: 16,
-    color: AppColors.textPrimary,
     fontWeight: '500',
-  },
-  modalOptionTextActive: {
-    color: AppColors.primary,
-    fontWeight: '700',
   },
 });

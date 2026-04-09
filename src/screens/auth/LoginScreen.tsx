@@ -12,8 +12,10 @@ import {
   Alert,
   Image,
   useWindowDimensions,
+  StatusBar,
 } from 'react-native';
 import { useAuthStore } from '../../auth/authStore';
+import { useTheme } from '../../components/ThemeContext';
 import { AppColors } from '../../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -21,6 +23,7 @@ const LOGO_ASPECT_RATIO = 904 / 343;
 
 export const LoginScreen = ({ navigation }: any) => {
   const { width } = useWindowDimensions();
+  const { theme, isDark } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -61,34 +64,35 @@ export const LoginScreen = ({ navigation }: any) => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
     >
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Image 
             source={require('../../../assets/logo_anexo.png')} 
-            style={[styles.logo, { width: logoWidth, height: logoHeight }]}
+            style={[styles.logo, { width: logoWidth, height: logoHeight }, isDark && { tintColor: '#fff' }]}
             resizeMode="contain"
           />
-          <Text style={styles.subtitle}>Acesse sua conta para continuar</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Acesse sua conta para continuar</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>E-mail</Text>
-            <View style={styles.inputWrapper}>
-              <View style={styles.leadingIconContainer}>
+            <Text style={[styles.label, { color: theme.textPrimary }]}>E-mail</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+              <View style={[styles.leadingIconContainer, { borderRightColor: theme.divider }]}>
                 <MaterialCommunityIcons
                   name="account-outline"
                   size={22}
-                  color={AppColors.primary}
+                  color={theme.primary}
                   style={styles.inputIcon}
                 />
               </View>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.textPrimary }]}
                 placeholder="seu@email.com"
-                placeholderTextColor={AppColors.textHint}
+                placeholderTextColor={theme.textHint}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -98,32 +102,32 @@ export const LoginScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Senha</Text>
-            <View style={styles.inputWrapper}>
-              <View style={styles.leadingIconContainer}>
+            <Text style={[styles.label, { color: theme.textPrimary }]}>Senha</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+              <View style={[styles.leadingIconContainer, { borderRightColor: theme.divider }]}>
                 <MaterialCommunityIcons
                   name="lock-outline"
                   size={22}
-                  color={AppColors.primary}
+                  color={theme.primary}
                   style={styles.inputIcon}
                 />
               </View>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.textPrimary }]}
                 placeholder="••••••••"
-                placeholderTextColor={AppColors.textHint}
+                placeholderTextColor={theme.textHint}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
-                style={styles.trailingIconButton}
+                style={[styles.trailingIconButton, { borderLeftColor: theme.divider }]}
                 onPress={() => setShowPassword(!showPassword)}
               >
                 <MaterialCommunityIcons 
                   name={showPassword ? "eye-off-outline" : "eye-outline"} 
                   size={20} 
-                  color={AppColors.textSecondary} 
+                  color={theme.textSecondary} 
                 />
               </TouchableOpacity>
             </View>
@@ -137,18 +141,18 @@ export const LoginScreen = ({ navigation }: any) => {
               <MaterialCommunityIcons 
                 name={rememberMe ? "checkbox-marked" : "checkbox-blank-outline"} 
                 size={24} 
-                color={rememberMe ? AppColors.primary : AppColors.textSecondary} 
+                color={rememberMe ? theme.primary : theme.textSecondary} 
               />
-              <Text style={styles.checkboxLabel}>Manter conectado</Text>
+              <Text style={[styles.checkboxLabel, { color: theme.textSecondary }]}>Manter conectado</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-              <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
+              <Text style={[styles.forgotPassword, { color: theme.primary }]}>Esqueceu a senha?</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity 
-            style={[styles.button, isLoading ? styles.buttonDisabled : undefined]} 
+            style={[styles.button, { backgroundColor: theme.primary }, isLoading ? styles.buttonDisabled : undefined]} 
             onPress={handleLogin}
             disabled={isLoading}
           >
@@ -160,10 +164,10 @@ export const LoginScreen = ({ navigation }: any) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={[styles.secondaryButton, { backgroundColor: theme.surface, borderColor: theme.primary }]}
             onPress={() => navigation.navigate('Denuncia')}
           >
-            <Text style={styles.secondaryButtonText}>DENUNCIA ANONIMA</Text>
+            <Text style={[styles.secondaryButtonText, { color: theme.primary }]}>DENUNCIA ANONIMA</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

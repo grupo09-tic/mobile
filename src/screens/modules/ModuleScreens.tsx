@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSidebar } from '../../components/SidebarContext';
+import { useTheme } from '../../components/ThemeContext';
 import { AppColors } from '../../constants/theme';
 
 interface ModuleScaffoldProps {
@@ -23,35 +25,40 @@ interface ModuleScaffoldProps {
 
 const ModuleScaffold = ({ title, icon, iconColor, items, emptyMessage, onBack }: ModuleScaffoldProps) => {
   const insets = useSafeAreaInsets();
+  const { openSidebar } = useSidebar();
+  const { theme } = useTheme();
   return (
-    <View style={styles.container}>
-      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => onBack ? onBack() : null}>
+          <MaterialCommunityIcons name="chevron-left" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.appBarTitle}>{title}</Text>
+        <Text style={[styles.appBarTitle, { color: theme.textPrimary }]}>{title}</Text>
+        <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
+          <MaterialCommunityIcons name="menu" size={26} color={theme.textPrimary} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {items.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name={icon} size={64} color={iconColor + '4D'} />
-            <Text style={styles.emptyText}>{emptyMessage || 'Nenhum item encontrado'}</Text>
-          </View>
-        ) : (
+        {items.length > 0 ? (
           <View style={styles.list}>
             {items.map((item, index) => (
-              <TouchableOpacity key={index} style={styles.card}>
-                <View style={[styles.cardIconContainer, { backgroundColor: iconColor + '1F' }]}>
-                  <MaterialCommunityIcons name={icon} size={22} color={iconColor} />
+              <TouchableOpacity key={index} style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+                <View style={[styles.cardIconContainer, { backgroundColor: iconColor + '1A' }]}>
+                  <MaterialCommunityIcons name={icon} size={28} color={iconColor} />
                 </View>
                 <View style={styles.cardInfo}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
+                  <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{item.title}</Text>
+                  <Text style={[styles.cardSubtitle, { color: theme.textHint }]}>{item.subtitle}</Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={22} color={AppColors.textHint} />
+                <MaterialCommunityIcons name="chevron-right" size={24} color={theme.textHint} />
               </TouchableOpacity>
             ))}
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons name="information-outline" size={48} color={theme.textHint} />
+            <Text style={[styles.emptyText, { color: theme.textHint }]}>{emptyMessage || 'Nenhum item encontrado.'}</Text>
           </View>
         )}
       </ScrollView>
@@ -59,131 +66,61 @@ const ModuleScaffold = ({ title, icon, iconColor, items, emptyMessage, onBack }:
   );
 };
 
-export const QuestionariosScreen = ({ navigation }: any) => (
-  <ModuleScaffold
-    title="Questionários"
-    icon="clipboard-text-outline"
-    iconColor={AppColors.moduleBlue}
-    items={[
-      { title: 'Pesquisa de Satisfação', subtitle: '5 perguntas' },
-      { title: 'Avaliação de Desempenho', subtitle: '10 perguntas' },
-    ]}
-    onBack={() => navigation.goBack()}
-  />
-);
+export const QuestionariosScreen = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  return (
+    <ModuleScaffold
+      title="Questionários"
+      icon="clipboard-text-outline"
+      iconColor={theme.moduleBlue}
+      items={[]}
+      emptyMessage="Nenhum questionário pendente no momento."
+      onBack={() => navigation.goBack()}
+    />
+  );
+};
 
-export const AvisosScreen = ({ navigation }: any) => (
-  <ModuleScaffold
-    title="Avisos"
-    icon="bullhorn-outline"
-    iconColor={AppColors.modulePurple}
-    items={[
-      { title: 'Reunião Geral — 10/04', subtitle: 'Sala de conferências, 14h' },
-      { title: 'Feriado Nacional', subtitle: 'Tiradentes — 21/04' },
-      { title: 'Atualização de Políticas', subtitle: 'Leia o documento em anexo' },
-      { title: 'Treinamento Obrigatório', subtitle: 'Prazo: 30/04' },
-    ]}
-    onBack={() => navigation.goBack()}
-  />
-);
+export const AvisosScreen = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  return (
+    <ModuleScaffold
+      title="Avisos"
+      icon="bullhorn-outline"
+      iconColor={theme.modulePurple}
+      items={[
+        { title: 'Manutenção no Sistema', subtitle: 'Agendada para este sábado às 22h.' },
+        { title: 'Novo Benefício', subtitle: 'Confira as novas parcerias do clube de descontos.' },
+      ]}
+      onBack={() => navigation.goBack()}
+    />
+  );
+};
 
-export const DocumentosScreen = ({ navigation }: any) => (
-  <ModuleScaffold
-    title="Documentos"
-    icon="file-document-outline"
-    iconColor={AppColors.moduleGreen}
-    items={[]}
-    emptyMessage="Nenhum documento disponível"
-    onBack={() => navigation.goBack()}
-  />
-);
+export const DocumentosScreen = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  return (
+    <ModuleScaffold
+      title="Documentos"
+      icon="file-document-outline"
+      iconColor={theme.moduleGreen}
+      items={[]}
+      emptyMessage="Sua pasta de documentos está vazia."
+      onBack={() => navigation.goBack()}
+    />
+  );
+};
 
 export const DenunciaScreen = ({ navigation }: any) => {
-  const [categoria, setCategoria] = useState('Assédio');
-  const [descricao, setDescricao] = useState('');
-  const [enviado, setEnviado] = useState(false);
-
-  const handleSubmit = () => {
-    if (descricao.length < 20) {
-      Alert.alert('Erro', 'Por favor, descreva com mais detalhes (mín. 20 caracteres)');
-      return;
-    }
-    setEnviado(true);
-  };
-
-  const insets = useSafeAreaInsets();
-
-  if (enviado) {
-    return (
-      <View style={styles.container}>
-        <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
-           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.appBarTitle}>Denúncia Enviada</Text>
-        </View>
-        <View style={[styles.scrollContent, styles.center]}>
-          <View style={styles.successIconContainer}>
-            <MaterialCommunityIcons name="check-circle-outline" size={40} color={AppColors.success} />
-          </View>
-          <Text style={styles.successTitle}>Denúncia enviada!</Text>
-          <Text style={styles.successSubtitle}>
-            Sua denúncia foi registrada de forma anônima e segura. Ela será analisada pela equipe responsável.
-          </Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.primaryButtonText}>Voltar ao início</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
+  const { theme } = useTheme();
   return (
-    <View style={styles.container}>
-      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.appBarTitle}>Denúncia Anônima</Text>
-      </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.infoBanner}>
-          <MaterialCommunityIcons name="shield-outline" size={20} color={AppColors.info} />
-          <Text style={styles.infoText}>
-            Sua identidade é protegida. Esta denúncia é completamente anônima.
-          </Text>
-        </View>
-
-        <Text style={styles.fieldLabel}>Categoria</Text>
-        <View style={styles.pickerContainer}>
-          {['Assédio', 'Discriminação', 'Irregularidade Financeira', 'Conduta Inadequada', 'Outro'].map((cat) => (
-            <TouchableOpacity 
-              key={cat} 
-              style={[styles.catOption, categoria === cat ? styles.catOptionActive : undefined]}
-              onPress={() => setCategoria(cat)}
-            >
-              <Text style={[styles.catText, categoria === cat ? styles.catTextActive : undefined]}>{cat}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.fieldLabel}>Descrição</Text>
-        <TextInput
-          style={styles.textArea}
-          multiline={true}
-          numberOfLines={6}
-          placeholder="Descreva a ocorrência com detalhes, sem identificar a si mesmo..."
-          value={descricao}
-          onChangeText={setDescricao}
-          textAlignVertical="top"
-        />
-
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit}>
-          <MaterialCommunityIcons name="send-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.primaryButtonText}>Enviar Denúncia</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+    <ModuleScaffold
+      title="Denúncia Anônima"
+      icon="shield-outline"
+      iconColor={theme.moduleRed}
+      items={[]}
+      emptyMessage="Utilize este canal para relatar ocorrências de forma segura e anônima."
+      onBack={() => navigation.goBack()}
+    />
   );
 };
 
@@ -205,19 +142,18 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   appBarTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: AppColors.textPrimary,
-    marginLeft: 16,
+    flex: 1,
+  },
+  menuButton: {
+    padding: 8,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 4,
   },
   scrollContent: {
     padding: 20,

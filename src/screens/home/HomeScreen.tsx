@@ -9,171 +9,182 @@ import {
   Dimensions,
   Image,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../auth/authStore';
-import { AppColors, AppTheme } from '../../constants/theme';
+import { useSidebar } from '../../components/SidebarContext';
+import { useTheme } from '../../components/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - 56) / 2; // Ajustado para 2 colunas com padding de 20px e gap de 16px
-const LOGO_ASPECT_RATIO = 904 / 343;
 
 export const HomeScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { user, logout } = useAuthStore();
+  const { openSidebar } = useSidebar();
+  const { theme, isDark } = useTheme();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sair',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Sair', 
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+          }
+        },
+      ]
+    );
+  };
   const brandLogoWidth = Math.min(windowWidth - 114, 240);
-  const brandLogoHeight = brandLogoWidth / LOGO_ASPECT_RATIO;
-  const firstName = user?.nome?.split(' ')[0] || 'Usuário';
+  const brandLogoHeight = 44;
 
   const modules = [
     {
       id: 'questionarios',
       title: 'Questionários',
-      subtitle: '2 itens',
+      subtitle: '2 pendentes',
       icon: 'clipboard-text-outline',
-      color: AppColors.moduleBlue,
+      color: theme.moduleBlue,
       route: 'Questionarios',
+      badge: '2'
     },
     {
       id: 'avisos',
       title: 'Avisos',
-      subtitle: '4 itens',
+      subtitle: '3 não lidos',
       icon: 'bullhorn-outline',
-      color: AppColors.modulePurple,
+      color: theme.modulePurple,
       route: 'Avisos',
+      badge: '3'
     },
     {
       id: 'documentos',
       title: 'Documentos',
-      subtitle: '0 itens',
+      subtitle: 'Holerites, docs',
       icon: 'file-document-outline',
-      color: AppColors.moduleGreen,
+      color: theme.moduleGreen,
       route: 'Documentos',
     },
     {
-      id: 'financeiro',
-      title: 'Informes Financeiros',
-      subtitle: 'Contracheques',
-      icon: 'finance',
-      color: AppColors.primary,
-      route: 'InformesFinanceiros',
-    },
-    {
-      id: 'denuncia',
-      title: 'Denúncia Anônima',
-      subtitle: 'Relate ocorrências com segurança',
-      icon: 'shield-outline',
-      color: AppColors.moduleRed,
-      route: 'Denuncia',
+      id: 'notificacoes',
+      title: 'Notificações',
+      subtitle: '5 novas',
+      icon: 'bell-outline',
+      color: theme.moduleOrange,
+      route: 'Avisos',
+      badge: '5'
     },
   ];
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content" } />
       <ScrollView 
+        style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header Section */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Image 
-              source={require('../../../assets/logo_anexo.png')} 
-              style={[styles.brandLogo, { width: brandLogoWidth, height: brandLogoHeight }]}
-              resizeMode="contain"
-            />
+            <View style={styles.logoRow}>
+              <TouchableOpacity onPress={openSidebar} style={styles.menuButton}>
+                <MaterialCommunityIcons name="menu" size={28} color={theme.textPrimary} />
+              </TouchableOpacity>
+              <Image 
+                source={require('../../../assets/logo_anexo.png')} 
+                style={[styles.brandLogo, { width: brandLogoWidth, height: brandLogoHeight }, isDark && { tintColor: '#fff' }]}
+                resizeMode="contain"
+              />
+            </View>
             <View style={styles.greetingWrapper}>
-              <Text style={styles.welcomeSubtitle}>Olá, bem-vindo! 👋</Text>
-              <Text style={styles.userName}>{user?.nome || 'João Silva'}</Text>
+              <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>Olá, bem-vindo! 👋</Text>
+              <Text style={[styles.userName, { color: theme.textPrimary }]}>{user?.nome || 'João Silva'}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.notificationWrapper}>
-            <View style={styles.notificationBtn}>
-              <MaterialCommunityIcons name="bell" size={26} color="#FFD700" />
-              <View style={styles.notifBadge} />
-            </View>
+          <TouchableOpacity style={[styles.notificationBtn, { backgroundColor: theme.surface }]}>
+            <MaterialCommunityIcons name="bell-badge" size={24} color={theme.warning} />
           </TouchableOpacity>
         </View>
 
-        {/* Featured Alert Card */}
-        <TouchableOpacity style={styles.alertCard} activeOpacity={0.9}>
-          <View style={styles.alertIconBg}>
-            <MaterialCommunityIcons name="bullhorn" size={24} color="#fff" />
+        {/* Featured Card (Latest Announcement) */}
+        <TouchableOpacity style={[styles.featuredCard, { backgroundColor: isDark ? theme.surface : theme.primary + 'E6' }]}>
+          <View style={styles.featuredBadge}>
+            <MaterialCommunityIcons name="bullhorn-variant" size={14} color="#fff" />
+            <Text style={styles.featuredBadgeText}>ÚLTIMO AVISO</Text>
           </View>
-          <View style={styles.alertInfo}>
-            <Text style={styles.alertTag}>ÚLTIMO AVISO</Text>
-            <Text style={styles.alertTitle} numberOfLines={2}>
-              Reunião geral amanhã às 10h na sala de conferências
-            </Text>
-            <Text style={styles.alertTime}>Hoje, 08:30</Text>
-          </View>
-          <View style={styles.alertMegaphone}>
-             <MaterialCommunityIcons name="bullhorn" size={60} color="rgba(255,255,255,0.1)" />
+          <Text style={styles.featuredTitle}>Reunião geral amanhã às 10h na sala de conferências</Text>
+          <Text style={[styles.featuredDate, { color: isDark ? theme.textSecondary : 'rgba(255,255,255,0.7)' }]}>Hoje, 08:30</Text>
+          <View style={styles.featuredIconBg}>
+            <MaterialCommunityIcons name="bullhorn" size={80} color="rgba(255,255,255,0.1)" />
           </View>
         </TouchableOpacity>
 
-        {/* Modules Header */}
+        {/* Modules Grid */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Módulos</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Módulos</Text>
           <TouchableOpacity onPress={() => navigation.navigate('ModuleList')}>
-            <Text style={styles.seeAllLink}>Ver todos</Text>
+            <Text style={[styles.seeAllLink, { color: theme.primary }]}>Ver todos</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Modules Grid */}
         <View style={styles.modulesGrid}>
-          {modules.map((module, index) => (
-            <TouchableOpacity
-              key={module.id}
-              style={styles.gridCard}
+          {modules.map((module) => (
+            <TouchableOpacity 
+              key={module.id} 
+              style={[styles.moduleCard, { backgroundColor: theme.surface }]}
               onPress={() => navigation.navigate(module.route)}
-              activeOpacity={0.7}
             >
-              <View style={styles.cardHeader}>
-                <View style={[styles.moduleIconContainer, { backgroundColor: '#F3F4F6' }]}>
+              <View style={styles.moduleIconHeader}>
+                <View style={[styles.moduleIconContainer, { backgroundColor: isDark ? theme.background : module.color + '15' }]}>
                   <MaterialCommunityIcons name={module.icon as any} size={28} color={module.color} />
                 </View>
-                <View style={styles.cardBadge}>
-                  <Text style={styles.cardBadgeText}>{index + 2}</Text>
-                </View>
+                {module.badge && (
+                  <View style={[styles.moduleBadge, { backgroundColor: theme.error }]}>
+                    <Text style={styles.moduleBadgeText}>{module.badge}</Text>
+                  </View>
+                )}
               </View>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{module.title}</Text>
-                <Text style={styles.cardSubtitle}>{module.subtitle}</Text>
-              </View>
+              <Text style={[styles.moduleTitle, { color: theme.textPrimary }]}>{module.title}</Text>
+              <Text style={[styles.moduleSubtitle, { color: theme.textHint }]}>{module.subtitle}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
 
       {/* Bottom Nav Bar */}
-      <View style={[styles.bottomNav, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
+      <View style={[styles.bottomNav, { 
+        backgroundColor: theme.surface, 
+        paddingBottom: insets.bottom > 0 ? insets.bottom : 20,
+        borderTopColor: theme.divider,
+        borderTopWidth: 1
+      }]}>
         <TouchableOpacity style={styles.navItem} onPress={() => {}}>
-          <MaterialCommunityIcons name="home-variant" size={28} color={AppColors.primary} />
-          <Text style={[styles.navText, { color: AppColors.primary, fontWeight: '700' }]}>Home</Text>
+          <MaterialCommunityIcons name="home-variant" size={28} color={theme.primary} />
+          <Text style={[styles.navText, { color: theme.primary, fontWeight: '700' }]}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Questionarios')}>
-          <MaterialCommunityIcons name="clipboard-text-outline" size={26} color={AppColors.textHint} />
-          <Text style={styles.navText}>Questionários</Text>
+          <MaterialCommunityIcons name="clipboard-text-outline" size={26} color={theme.textHint} />
+          <Text style={[styles.navText, { color: theme.textHint }]}>Questionários</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Avisos')}>
-          <MaterialCommunityIcons name="bullhorn-outline" size={26} color={AppColors.textHint} />
-          <Text style={styles.navText}>Avisos</Text>
+          <MaterialCommunityIcons name="bullhorn-outline" size={26} color={theme.textHint} />
+          <Text style={[styles.navText, { color: theme.textHint }]}>Avisos</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
-          <MaterialCommunityIcons name="account-outline" size={28} color={AppColors.textHint} />
-          <Text style={styles.navText}>Perfil</Text>
+          <MaterialCommunityIcons name="account-outline" size={28} color={theme.textHint} />
+          <Text style={[styles.navText, { color: theme.textHint }]}>Perfil</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.navItem} 
-          onPress={async () => {
-             await logout();
-          }}
-        >
-          <MaterialCommunityIcons name="logout" size={26} color={AppColors.textHint} />
-          <Text style={styles.navText}>Sair</Text>
+        <TouchableOpacity style={styles.navItem} onPress={handleLogout}>
+          <MaterialCommunityIcons name="logout" size={26} color={theme.error} />
+          <Text style={[styles.navText, { color: theme.error }]}>Sair</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -183,11 +194,13 @@ export const HomeScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppColors.background,
+  },
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 120,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -199,95 +212,86 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 12,
   },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  menuButton: {
+    padding: 4,
+    marginLeft: -4,
+  },
   brandLogo: {
-    marginBottom: 8,
+    marginBottom: 0,
   },
   greetingWrapper: {
     gap: 2,
   },
   welcomeSubtitle: {
     fontSize: 15,
-    color: AppColors.textSecondary,
     fontWeight: '500',
   },
   userName: {
     fontSize: 26,
     fontWeight: '800',
-    color: AppColors.textPrimary,
-  },
-  notificationWrapper: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
   },
   notificationBtn: {
-    position: 'relative',
-  },
-  notifBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: AppColors.error,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  alertCard: {
-    backgroundColor: '#4338CA', // Suavizado para Indigo (menos escuro que o slate anterior)
-    borderRadius: 24,
-    padding: 20,
-    paddingRight: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 32,
-    overflow: 'hidden',
-  },
-  alertIconBg: {
     width: 48,
     height: 48,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  alertInfo: {
-    flex: 1,
-    zIndex: 2,
+  featuredCard: {
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 32,
+    position: 'relative',
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
-  alertTag: {
-    color: '#A5B4FC', // Indigo claro para melhor contraste no fundo Indigo
-    fontSize: 12,
+  featuredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginBottom: 12,
+  },
+  featuredBadgeText: {
+    color: '#fff',
+    fontSize: 11,
     fontWeight: '800',
-    marginBottom: 6,
     letterSpacing: 0.5,
   },
-  alertTitle: {
+  featuredTitle: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 26,
     marginBottom: 8,
+    zIndex: 1,
   },
-  alertTime: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 13,
+  featuredDate: {
+    fontSize: 12,
+    fontWeight: '500',
   },
-  alertMegaphone: {
+  featuredIconBg: {
     position: 'absolute',
     right: -10,
     bottom: -10,
-    transform: [{ rotate: '-15deg' }],
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -298,11 +302,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: AppColors.textPrimary,
   },
   seeAllLink: {
-    color: AppColors.primary,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   modulesGrid: {
@@ -311,56 +313,51 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 16,
   },
-  gridCard: {
-    width: COLUMN_WIDTH,
-    backgroundColor: '#fff',
+  moduleCard: {
+    width: (width - 56) / 2,
     borderRadius: 24,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    padding: 20,
     elevation: 2,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
-  cardHeader: {
+  moduleIconHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
   moduleIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cardBadge: {
-    backgroundColor: '#FA8072', // Vermelho salmão como na foto
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+  moduleBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 6,
+    marginTop: -4,
+    marginRight: -4,
   },
-  cardBadgeText: {
+  moduleBadgeText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  cardBody: {
-    gap: 4,
-  },
-  cardTitle: {
-    fontSize: 17,
+    fontSize: 11,
     fontWeight: '800',
-    color: AppColors.textPrimary,
   },
-  cardSubtitle: {
-    fontSize: 13,
-    color: AppColors.textSecondary,
+  moduleTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  moduleSubtitle: {
+    fontSize: 12,
     fontWeight: '500',
   },
   bottomNav: {
@@ -368,27 +365,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    height: 85,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 10,
-    elevation: 10,
+    paddingTop: 12,
   },
   navItem: {
     alignItems: 'center',
     gap: 4,
-    flex: 1,
   },
   navText: {
-    fontSize: 10,
-    color: AppColors.textHint,
+    fontSize: 11,
     fontWeight: '600',
   },
 });

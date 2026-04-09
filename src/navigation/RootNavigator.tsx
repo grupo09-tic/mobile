@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, createRef } from 'react';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuthStore } from '../auth/authStore';
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -10,29 +10,38 @@ import { ModuleListScreen } from '../screens/modules/ModuleListScreen';
 import { ProfileScreen } from '../screens/home/ProfileScreen';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { AppColors } from '../constants/theme';
+import { SidebarProvider, useSidebar } from '../components/SidebarContext';
+import { Sidebar } from '../components/Sidebar';
+import { ThemeProvider, useTheme } from '../components/ThemeContext';
 
 const Stack = createStackNavigator();
+export const navigationRef = createRef<NavigationContainerRef<any>>();
 
-export const RootNavigator = () => {
-  const { isAuthenticated, isLoading, initializeAuth } = useAuthStore();
-
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: AppColors.background }}>
-        <ActivityIndicator size={Platform.OS === 'android' ? 48 : 'large'} color={AppColors.primary} />
-      </View>
-    );
-  }
+const NavigatorContent = () => {
+  const { isAuthenticated } = useAuthStore();
+  const { setCurrentRoute } = useSidebar();
+  const { theme } = useTheme();
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        const routeName = navigationRef.current?.getCurrentRoute()?.name;
+        if (routeName) {
+          setCurrentRoute(routeName);
+        }
+      }}
+      onStateChange={() => {
+        const routeName = navigationRef.current?.getCurrentRoute()?.name;
+        if (routeName) {
+          setCurrentRoute(routeName);
+        }
+      }}
+    >
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
+          cardStyle: { backgroundColor: theme.background },
         }}
       >
         {!!isAuthenticated === false ? (
@@ -53,6 +62,31 @@ export const RootNavigator = () => {
           </>
         )}
       </Stack.Navigator>
+      <Sidebar />
     </NavigationContainer>
+  );
+};
+
+export const RootNavigator = () => {
+  const { isLoading, initializeAuth } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: AppColors.background }}>
+        <ActivityIndicator size={Platform.OS === 'android' ? 48 : 'large'} color={AppColors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <ThemeProvider>
+      <SidebarProvider>
+        <NavigatorContent />
+      </SidebarProvider>
+    </ThemeProvider>
   );
 };

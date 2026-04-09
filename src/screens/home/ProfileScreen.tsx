@@ -18,11 +18,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../../auth/authStore';
+import { useSidebar } from '../../components/SidebarContext';
+import { useTheme } from '../../components/ThemeContext';
 import { AppColors } from '../../constants/theme';
 
 export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { user, logout, updatePassword, isLoading } = useAuthStore();
+  const { openSidebar } = useSidebar();
+  const { theme, isDark } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
 
@@ -75,14 +79,14 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={AppColors.primary} />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: theme.background }]}>
       <StatusBar barStyle="light-content" />
       
       <ScrollView 
@@ -91,7 +95,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         bounces={false}
       >
         {/* Header Section (Blue Background) */}
-        <View style={[styles.headerSection, { paddingTop: insets.top + 20 }]}>
+        <View style={[styles.headerSection, { paddingTop: insets.top + 20, backgroundColor: isDark ? theme.surface : theme.primary }]}>
           <TouchableOpacity 
             style={[styles.backButton, { top: insets.top + 10 }]} 
             onPress={() => navigation.goBack()}
@@ -99,8 +103,15 @@ export const ProfileScreen = ({ navigation }: any) => {
             <MaterialCommunityIcons name="chevron-left" size={32} color="#fff" />
           </TouchableOpacity>
 
+          <TouchableOpacity 
+            style={[styles.menuButtonHeader, { top: insets.top + 10 }]} 
+            onPress={openSidebar}
+          >
+            <MaterialCommunityIcons name="menu" size={30} color="#fff" />
+          </TouchableOpacity>
+
           <View style={styles.avatarWrapper}>
-            <View style={styles.avatarContainer}>
+            <View style={[styles.avatarContainer, { borderColor: isDark ? theme.primary : 'rgba(255,255,255,0.4)' }]}>
               {user?.avatar ? (
                 <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
               ) : (
@@ -113,43 +124,45 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
 
           <Text style={styles.userName}>{user?.nome || 'João Silva'}</Text>
-          <Text style={styles.userRole}>
+          <Text style={[styles.userRole, { color: isDark ? theme.textSecondary : 'rgba(255,255,255,0.85)' }]}>
             {user?.cargo || 'Analista de TI'} · {user?.departamento || 'Departamento de Tecnologia'}
           </Text>
         </View>
 
         {/* Main Content */}
-        <View style={styles.mainContent}>
+        <View style={[styles.mainContent, { backgroundColor: theme.background }]}>
           {/* Info Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Dados do Colaborador</Text>
-            <InfoRow icon="card-account-details-outline" label="CPF" value={formatCPF(user?.cpf || null)} />
-            <View style={styles.divider} />
-            <InfoRow icon="phone-outline" label="Telefone" value={formatPhone(user?.telefone || null)} />
-            <View style={styles.divider} />
-            <InfoRow icon="calendar-check-outline" label="Data de Admissão" value={formatDate(user?.dataAdmissao || null)} />
-            <View style={styles.divider} />
-            <InfoRow icon="email-outline" label="E-mail Corporativo" value={user?.email || '—'} />
+          <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+            <Text style={[styles.cardTitle, { color: theme.textHint }]}>Dados do Colaborador</Text>
+            <InfoRow icon="card-account-details-outline" label="CPF" value={formatCPF(user?.cpf || null)} theme={theme} />
+            <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+            <InfoRow icon="phone-outline" label="Telefone" value={formatPhone(user?.telefone || null)} theme={theme} />
+            <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+            <InfoRow icon="calendar-check-outline" label="Data de Admissão" value={formatDate(user?.dataAdmissao || null)} theme={theme} />
+            <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+            <InfoRow icon="email-outline" label="E-mail Corporativo" value={user?.email || '—'} theme={theme} />
           </View>
 
           {/* Account Settings */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Configurações</Text>
+          <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+            <Text style={[styles.cardTitle, { color: theme.textHint }]}>Configurações</Text>
             <ActionRow 
               icon="lock-reset" 
               label="Alterar Senha" 
               onTap={() => setModalVisible(true)} 
+              theme={theme}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.divider }]} />
             <ActionRow 
               icon="logout" 
               label="Encerrar Sessão" 
-              color={AppColors.error} 
+              color={theme.error} 
               onTap={handleLogout} 
+              theme={theme}
             />
           </View>
 
-          <Text style={styles.versionText}>Versão 1.0.0 (Brisa)</Text>
+          <Text style={[styles.versionText, { color: theme.textHint }]}>Versão 1.0.0 (Brisa)</Text>
         </View>
       </ScrollView>
 
@@ -157,34 +170,35 @@ export const ProfileScreen = ({ navigation }: any) => {
         visible={modalVisible} 
         onClose={() => setModalVisible(false)}
         onSave={updatePassword}
+        theme={theme}
       />
     </Animated.View>
   );
 };
 
-const InfoRow = ({ icon, label, value, valueColor }: any) => (
+const InfoRow = ({ icon, label, value, valueColor, theme }: any) => (
   <View style={styles.row}>
-    <View style={styles.iconBox}>
-      <MaterialCommunityIcons name={icon} size={22} color={AppColors.primary} />
+    <View style={[styles.iconBox, { backgroundColor: theme.background }]}>
+      <MaterialCommunityIcons name={icon} size={22} color={theme.primary} />
     </View>
     <View style={styles.rowInfo}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, valueColor ? { color: valueColor } : undefined]}>{value}</Text>
+      <Text style={[styles.rowLabel, { color: theme.textHint }]}>{label}</Text>
+      <Text style={[styles.rowValue, { color: theme.textPrimary }, valueColor ? { color: valueColor } : undefined]}>{value}</Text>
     </View>
   </View>
 );
 
-const ActionRow = ({ icon, label, onTap, color }: any) => (
+const ActionRow = ({ icon, label, onTap, color, theme }: any) => (
   <TouchableOpacity style={styles.row} onPress={onTap}>
-    <View style={[styles.iconBox, color ? { backgroundColor: color + '1A' } : undefined]}>
-      <MaterialCommunityIcons name={icon} size={22} color={color || AppColors.textSecondary} />
+    <View style={[styles.iconBox, { backgroundColor: color ? color + '1A' : theme.background }]}>
+      <MaterialCommunityIcons name={icon} size={22} color={color || theme.textSecondary} />
     </View>
-    <Text style={[styles.rowLabelAction, color ? { color, fontWeight: '600' } : undefined]}>{label}</Text>
-    <MaterialCommunityIcons name="chevron-right" size={20} color={color ? color + '99' : AppColors.textHint} />
+    <Text style={[styles.rowLabelAction, { color: theme.textPrimary }, color ? { color, fontWeight: '600' } : undefined]}>{label}</Text>
+    <MaterialCommunityIcons name="chevron-right" size={20} color={color ? color + '99' : theme.textHint} />
   </TouchableOpacity>
 );
 
-const ChangePasswordModal = ({ visible, onClose, onSave }: any) => {
+const ChangePasswordModal = ({ visible, onClose, onSave, theme }: any) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -217,40 +231,43 @@ const ChangePasswordModal = ({ visible, onClose, onSave }: any) => {
       <View style={styles.modalOverlay}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContent}
+          style={[styles.modalContent, { backgroundColor: theme.surface }]}
         >
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Alterar Senha</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Alterar Senha</Text>
             <TouchableOpacity onPress={onClose}>
-              <MaterialCommunityIcons name="close" size={24} color={AppColors.textPrimary} />
+              <MaterialCommunityIcons name="close" size={24} color={theme.textPrimary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.form}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.background, borderColor: theme.divider, color: theme.textPrimary }]}
               placeholder="Senha atual"
+              placeholderTextColor={theme.textHint}
               secureTextEntry
               value={currentPassword}
               onChangeText={setCurrentPassword}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.background, borderColor: theme.divider, color: theme.textPrimary }]}
               placeholder="Nova senha"
+              placeholderTextColor={theme.textHint}
               secureTextEntry
               value={newPassword}
               onChangeText={setNewPassword}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.background, borderColor: theme.divider, color: theme.textPrimary }]}
               placeholder="Confirmar nova senha"
+              placeholderTextColor={theme.textHint}
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
 
             <TouchableOpacity 
-              style={[styles.primaryButton, loading && { opacity: 0.7 }]} 
+              style={[styles.primaryButton, { backgroundColor: theme.primary }, loading && { opacity: 0.7 }]} 
               onPress={handleSave}
               disabled={loading}
             >
@@ -287,6 +304,12 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     left: 10,
+    padding: 8,
+    zIndex: 10,
+  },
+  menuButtonHeader: {
+    position: 'absolute',
+    right: 10,
     padding: 8,
     zIndex: 10,
   },
