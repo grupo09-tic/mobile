@@ -15,7 +15,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSidebar } from './SidebarContext';
 import { useTheme } from './ThemeContext';
 import { ALL_MODULES } from '../constants/modules';
-import { navigationRef } from '../navigation/RootNavigator';
+import { navigationRef } from '../navigation/navigationRef';
 import { ToggleSwitch } from './ToggleSwitch';
 
 const { width } = Dimensions.get('window');

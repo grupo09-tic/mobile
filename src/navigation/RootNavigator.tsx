@@ -1,5 +1,5 @@
-import React, { useEffect, createRef } from 'react';
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuthStore } from '../auth/authStore';
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -13,9 +13,9 @@ import { AppColors } from '../constants/theme';
 import { SidebarProvider, useSidebar } from '../components/SidebarContext';
 import { Sidebar } from '../components/Sidebar';
 import { ThemeProvider, useTheme } from '../components/ThemeContext';
+import { navigationRef } from './navigationRef';
 
 const Stack = createStackNavigator();
-export const navigationRef = createRef<NavigationContainerRef<any>>();
 
 const NavigatorContent = () => {
   const { isAuthenticated } = useAuthStore();
