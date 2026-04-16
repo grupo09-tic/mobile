@@ -21,7 +21,7 @@ export const ModuleListScreen = ({ navigation }: any) => {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}>
           <MaterialCommunityIcons name="chevron-left" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.appBarTitle, { color: theme.textPrimary }]}>Todos os Módulos</Text>

@@ -137,27 +137,30 @@ export const DenunciaScreen = ({ navigation }: any) => {
   ];
 
   const solicitarPermissoes = async () => {
-    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-    const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (cameraStatus !== 'granted' || mediaStatus !== 'granted') {
-      Alert.alert(
-        'Permissões Necessárias',
-        'Para anexar arquivos ou usar a câmera, é necessário conceder permissões de acesso à câmera e galeria.',
-        [{ text: 'OK' }]
-      );
+    try {
+      const cameraResult = await ImagePicker.requestCameraPermissionsAsync();
+      const mediaResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (cameraResult.status !== 'granted' && mediaResult.status !== 'granted') {
+        Alert.alert(
+          'Permissões Necessárias',
+          'Para anexar arquivos ou usar a câmera, é necessário conceder permissões de acesso à câmera e galeria.',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Erro ao solicitar permissões:', error);
+      Alert.alert('Erro', 'Não foi possível verificar as permissões.');
       return false;
     }
-    return true;
   };
 
   const capturarFoto = async () => {
-    const permissoesOk = await solicitarPermissoes();
-    if (!permissoesOk) return;
-
     try {
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: 'images',
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -173,19 +176,17 @@ export const DenunciaScreen = ({ navigation }: any) => {
         adicionarAnexo(novoAnexo);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível capturar a foto. Tente novamente.');
+      console.error('Erro ao capturar foto:', error);
+      Alert.alert('Erro', 'Não foi possível capturar a foto. Verifique as permissões e tente novamente.');
     } finally {
       setModalAnexoVisible(false);
     }
   };
 
   const selecionarArquivo = async () => {
-    const permissoesOk = await solicitarPermissoes();
-    if (!permissoesOk) return;
-
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: 'images',
         allowsMultipleSelection: false,
         quality: 1,
       });
@@ -200,7 +201,8 @@ export const DenunciaScreen = ({ navigation }: any) => {
         adicionarAnexo(novoAnexo);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível selecionar o arquivo. Tente novamente.');
+      console.error('Erro ao selecionar arquivo:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar o arquivo. Verifique as permissões e tente novamente.');
     } finally {
       setModalAnexoVisible(false);
     }
@@ -263,7 +265,7 @@ export const DenunciaScreen = ({ navigation }: any) => {
           </Text>
           <TouchableOpacity 
             style={[styles.primaryButton, { width: '80%', backgroundColor: theme.primary }]} 
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
           >
             <Text style={styles.primaryButtonText}>Voltar para o Início</Text>
           </TouchableOpacity>
@@ -275,7 +277,7 @@ export const DenunciaScreen = ({ navigation }: any) => {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}>
           <MaterialCommunityIcons name="chevron-left" size={24} color={theme.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.appBarTitle, { color: theme.textPrimary }]}>Denúncia Anônima</Text>
