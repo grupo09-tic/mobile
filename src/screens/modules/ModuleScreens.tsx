@@ -59,33 +59,129 @@ const ModuleScaffold = ({ title, icon, iconColor, items, emptyMessage, onBack }:
   );
 };
 
-export const QuestionariosScreen = ({ navigation }: any) => (
-  <ModuleScaffold
-    title="Questionários"
-    icon="clipboard-text-outline"
-    iconColor={AppColors.moduleBlue}
-    items={[
-      { title: 'Pesquisa de Satisfação', subtitle: '5 perguntas' },
-      { title: 'Avaliação de Desempenho', subtitle: '10 perguntas' },
-    ]}
-    onBack={() => navigation.goBack()}
-  />
-);
+export const AvisosScreen = ({ navigation }: any) => {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <View style={styles.container}>
+      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.appBarTitle}>Avisos</Text>
+      </View>
 
-export const AvisosScreen = ({ navigation }: any) => (
-  <ModuleScaffold
-    title="Avisos"
-    icon="bullhorn-outline"
-    iconColor={AppColors.modulePurple}
-    items={[
-      { title: 'Reunião Geral — 10/04', subtitle: 'Sala de conferências, 14h' },
-      { title: 'Feriado Nacional', subtitle: 'Tiradentes — 21/04' },
-      { title: 'Atualização de Políticas', subtitle: 'Leia o documento em anexo' },
-      { title: 'Treinamento Obrigatório', subtitle: 'Prazo: 30/04' },
-    ]}
-    onBack={() => navigation.goBack()}
-  />
-);
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.list}>
+          {/* Item 1 - Novo */}
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AvisoDetalhe')}>
+            <View style={[styles.cardIconContainer, { backgroundColor: AppColors.modulePurple + '1F' }]}>
+              <MaterialCommunityIcons name="bullhorn-outline" size={22} color={AppColors.modulePurple} />
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardTitle}>Reunião geral amanhã às 10h</Text>
+              <Text style={styles.cardSubtitle}>Hoje, 08:30</Text>
+            </View>
+            <View style={[styles.badge, styles.badgeUnread]}>
+              <Text style={styles.badgeUnreadText}>Novo</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Item 2 - Novo */}
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AvisoDetalhe')}>
+            <View style={[styles.cardIconContainer, { backgroundColor: AppColors.modulePurple + '1F' }]}>
+              <MaterialCommunityIcons name="bullhorn-outline" size={22} color={AppColors.modulePurple} />
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardTitle}>Atualização da política de home office</Text>
+              <Text style={styles.cardSubtitle}>Ontem, 14:15</Text>
+            </View>
+            <View style={[styles.badge, styles.badgeUnread]}>
+              <Text style={styles.badgeUnreadText}>Novo</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Item 3 - Novo */}
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AvisoDetalhe')}>
+            <View style={[styles.cardIconContainer, { backgroundColor: AppColors.modulePurple + '1F' }]}>
+              <MaterialCommunityIcons name="bullhorn-outline" size={22} color={AppColors.modulePurple} />
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardTitle}>Confraternização de fim de trimestre</Text>
+              <Text style={styles.cardSubtitle}>28/03/2026</Text>
+            </View>
+            <View style={[styles.badge, styles.badgeUnread]}>
+              <Text style={styles.badgeUnreadText}>Novo</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Item 4 - Lido */}
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AvisoDetalhe')}>
+            <View style={[styles.cardIconContainer, { backgroundColor: '#F1F5F9' }]}>
+              <MaterialCommunityIcons name="bullhorn-outline" size={22} color={AppColors.textHint} />
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardTitle}>Manutenção do sistema — Sábado</Text>
+              <Text style={styles.cardSubtitle}>25/03/2026</Text>
+            </View>
+            <View style={[styles.badge, styles.badgeRead]}>
+              <Text style={styles.badgeReadText}>Lido</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Item 5 - Lido */}
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AvisoDetalhe')}>
+            <View style={[styles.cardIconContainer, { backgroundColor: '#F1F5F9' }]}>
+              <MaterialCommunityIcons name="bullhorn-outline" size={22} color={AppColors.textHint} />
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardTitle}>Holerite de Março disponível</Text>
+              <Text style={styles.cardSubtitle}>20/03/2026</Text>
+            </View>
+            <View style={[styles.badge, styles.badgeRead]}>
+              <Text style={styles.badgeReadText}>Lido</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+export const AvisoDetalheScreen = ({ navigation }: any) => {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <View style={styles.container}>
+      <View style={[styles.appBar, { paddingTop: insets.top, height: 56 + insets.top }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <MaterialCommunityIcons name="chevron-left" size={24} color={AppColors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.appBarTitle}>Detalhe do Aviso</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.detailHeaderIcon}>
+          <Text style={{ fontSize: 40 }}>📢</Text>
+        </View>
+        <Text style={styles.detailTitle}>Reunião Geral — Amanhã às 10h00</Text>
+        <Text style={styles.detailMeta}>Publicado em 30/03/2026 às 08:30 · RH Corporativo</Text>
+        
+        <View style={styles.detailBodyCard}>
+          <Text style={styles.detailBodyText}>
+            Informamos que haverá uma reunião geral com todos os colaboradores amanhã, dia 31 de março de 2026, às 10 horas da manhã, na sala de conferências do 3º andar.{'\n\n'}
+            A pauta da reunião incluirá:{'\n'}
+            • Resultados do primeiro trimestre{'\n'}
+            • Metas para o segundo trimestre{'\n'}
+            • Novidades sobre benefícios e plano de carreira{'\n'}
+            • Espaço aberto para perguntas e sugestões{'\n\n'}
+            A participação é obrigatória para todos os colaboradores. Em caso de impossibilidade, favor comunicar seu gestor imediato com antecedência.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
 
 export const DocumentosScreen = ({ navigation }: any) => (
   <ModuleScaffold
@@ -386,5 +482,66 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeUnread: {
+    backgroundColor: '#EEF2FF',
+  },
+  badgeUnreadText: {
+    fontSize: 11,
+    color: '#4338CA',
+    fontWeight: '700',
+  },
+  badgeRead: {
+    backgroundColor: '#F1F5F9',
+  },
+  badgeReadText: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  detailHeaderIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    alignSelf: 'center',
+  },
+  detailTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: AppColors.textPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  detailMeta: {
+    fontSize: 13,
+    color: AppColors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  detailBodyCard: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  detailBodyText: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: AppColors.textSecondary,
   },
 });

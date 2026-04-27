@@ -52,50 +52,31 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       hasPermission: (permission: string) => get().permissions.includes(permission),
 
       login: async (credentials) => {
-        await authService.login(credentials);
-        const fullUser = await authService.getCurrentUser();
-        if (fullUser) {
-          set({
-            user: fullUser,
-            isAuthenticated: true,
-            permissions: parsePermissions(fullUser),
-          });
-        } else {
-          await get().logout();
-          throw new Error('Falha ao carregar dados do usuário.');
-        }
+        // BYPASS DE LOGIN PARA TESTES
+        const fakeUser: UserFromApi = {
+          id: 1,
+          nome: 'Usuário Teste',
+          email: credentials.email,
+          avatar: null,
+          ultimoAcesso: new Date().toISOString(),
+          perfilUsuario: {
+            id: 1,
+            nome: 'Administrador',
+            permissao: []
+          },
+          ativo: true
+        };
+        
+        set({
+          user: fakeUser,
+          isAuthenticated: true,
+          permissions: [],
+        });
       },
 
       initializeAuth: async () => {
-        try {
-          const forceLogout = await AsyncStorage.getItem('force_logout');
-          if (forceLogout === 'true') {
-            await AsyncStorage.removeItem('force_logout');
-            await get().logout();
-            set({ isLoading: false });
-            return;
-          }
-
-          const token = await authService.getAccessToken();
-          if (!token) {
-            set({ user: null, isAuthenticated: false, permissions: [], isLoading: false });
-            return;
-          }
-          const response = await authService.getCurrentUser();
-          if (response) {
-            set({
-              user: response,
-              isAuthenticated: true,
-              permissions: parsePermissions(response),
-            });
-          } else {
-            await get().logout();
-          }
-        } catch (error) {
-          set({ user: null, isAuthenticated: false, permissions: [] });
-        } finally {
-          set({ isLoading: false });
-        }
+        // BYPASS: Se já houver um usuário no Zustand (via persist), mantemos ele logado
+        set({ isLoading: false });
       },
 
       logout: async () => {

@@ -35,7 +35,7 @@ export const HomeScreen = ({ navigation }: any) => {
       id: 'avisos',
       title: 'Avisos',
       subtitle: '4 itens',
-      icon: 'bullhorn-outline',
+      icon: 'clipboard-text-outline',
       color: AppColors.modulePurple,
       route: 'Avisos',
     },
